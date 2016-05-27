@@ -5,14 +5,17 @@ import time
 import os
 import pickle
 
+#csv format
+keys = ['val1','val2','val3']
+
 ##SETTINGS##
 #serial
 port = 'COM5'
 baud = '115200'
 endline = '\n'
+delimiter = ','
 #log file
 filesize = 5000
-filesizecount = 0
 #http://stackoverflow.com/questions/647769/why-cant-pythons-raw-string-literals-end-with-a-single-backslash
 logfiledir = r"C:\Users\Reegan\Documents\GitHub\Python-Data-Logging\Log"
 logfilename = 'log'
@@ -31,8 +34,8 @@ logtimer = 0
 pickletimer = 0
 displaytimer = 0
 
-#data dictionary
-data = {"data1":0}
+#keeping track of file number
+filesizecount = 0
 
 if not os.path.exists(logfiledir):
     os.makedirs(logfiledir)
@@ -53,30 +56,41 @@ def readlineCR(port):
         rv += ch
         if ch==endline:
             return rv
+
+def csv2dict(line,keys):
+    line = line[0:len(line)-1] #remove endline
+    #split line 
+    d = line.split(delimiter)
+    #zip into dictionary
+    data = dict(zip(keys,d))
+    return data
+
+#displaying csv
+        
 try:
     while 1:
-        #s = serial.Serial(port, baudrate=baud, timeout=3.0)
-
+        s = serial.Serial(port, baudrate=baud, timeout=3.0)
         #make log file
         logfile = os.path.join(logfiledir,logfilename + str(logfilenumber) + logfiletype)
-        f = open(logfile,'a')
+        f = open(logfile,'w')
 
         #open pickle file
         fp = open(picklefile,"wb")
         
         while filesizecount <= filesize:
-            #do stuff
             now = time.time()
-            data["data1"] = "hi " + str(time.time()) + "\n"
-
+            
+            line = readlineCR(s)
+            data = csv2dict(line,keys)
+            
             #display data
             if (now - displaytimer) >= displayrate:
                 print(data)
                 displaytimer = now
                 
-            #log data
+            #log data in csv
             if (now - logtimer) >= lograte:
-                f.write(data["data1"])
+                f.write(line)
                 filesizecount += 1
                 logtimer = now
             if filesizecount == filesize:
