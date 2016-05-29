@@ -6,13 +6,13 @@ import os
 import pickle
 
 #csv format
-keys = ['val1','val2','val3']
+keys = ['x','y','z']
 
 ##SETTINGS##
 #serial
 port = 'COM5'
 baud = '115200'
-endline = '\n'
+endline = b'\n'
 delimiter = ','
 #log file
 filesize = 5000
@@ -22,11 +22,11 @@ logfilename = 'log'
 logfiletype = '.csv'
 logfilenumber = 0
 logsessionnumber = 0
-lograte = 0.05
+lograte = 0.1
 #display
-displayrate = 3.0
+displayrate = 1.0
 #pickle
-picklerate = 1.0
+picklerate = 0.25
 picklefile = r"data.pkl"
 
 #variables for timing
@@ -50,15 +50,16 @@ logfiledir = os.path.join(logfiledir, str(logsessionnumber))
 os.mkdir(logfiledir)
 
 def readlineCR(port):
-    rv = ""
+    rv = b""
     while True:
         ch = port.read()
         rv += ch
         if ch==endline:
+            rv = rv.decode("utf-8")
             return rv
 
 def csv2dict(line,keys):
-    line = line[0:len(line)-1] #remove endline
+    line = line[0:len(line)-2] #remove endline
     #split line 
     d = line.split(delimiter)
     #zip into dictionary
@@ -81,12 +82,13 @@ try:
             now = time.time()
             
             line = readlineCR(s)
+ #           line = '1,2,3\n'
             data = csv2dict(line,keys)
             
             #display data
-            if (now - displaytimer) >= displayrate:
-                print(data)
-                displaytimer = now
+#            if (now - displaytimer) >= displayrate:
+#                print(data)
+#                displaytimer = now
                 
             #log data in csv
             if (now - logtimer) >= lograte:
@@ -103,9 +105,17 @@ try:
 
             #pickle data
             if (now - pickletimer) >= picklerate:
-                pickle.dump(data,fp)
-                pickletimer = now
+                try:
+                    fp = open(picklefile,"wb")
+                    pickle.dump(data,fp)
+                    pickletimer = now
+                except EOFError:
+                    print('open file open in another process')
+                fp.close()
+
                 
 except KeyboardInterrupt:
-    f.close()
-    fp.close()
+    print('closing')
+    
+f.close()
+fp.close()
