@@ -27,7 +27,7 @@ lograte = 0.1
 #display
 displayrate = 1.0
 #pickle
-picklerate = 0.25
+picklerate = 0.5
 picklefile = r"data.pkl"
 
 #variables for timing
@@ -75,9 +75,6 @@ try:
         #make log file
         logfile = os.path.join(logfiledir,logfilename + str(logfilenumber) + logfiletype)
         f = open(logfile,'w')
-
-        #open pickle file
-        fp = open(picklefile,"wb")
         
         while filesizecount <= filesize:
             now = time.time()
