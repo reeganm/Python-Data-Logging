@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 #script for Loging CSV data from Serial
 
 import serial
@@ -10,14 +11,14 @@ keys = ['x','y','z']
 
 ##SETTINGS##
 #serial
-port = 'COM5'
+port = '/dev/ttyUSB0'
 baud = '115200'
 endline = b'\n'
 delimiter = ','
 #log file
 filesize = 5000
 #http://stackoverflow.com/questions/647769/why-cant-pythons-raw-string-literals-end-with-a-single-backslash
-logfiledir = r"C:\Users\Reegan\Documents\GitHub\Python-Data-Logging\Log"
+logfiledir = r"/home/pi/Python-Data-Logging/Log"
 logfilename = 'log'
 logfiletype = '.csv'
 logfilenumber = 0
