@@ -4,7 +4,6 @@ import serial
 import time
 import os
 import sys
-import pickle
 import os
 import json
 
@@ -79,37 +78,40 @@ def readlineCR(serial_p):
                         state = 0 #invalid character detected
         print(rv)
         return(rv)
-            
+
+def csv2dict(line,keys):
+    #split line 
+    d = line.split(delimiter)
+    #zip into dictionary
+    data = dict(zip(keys,d))
+    return data
+
+
+#csv format
+keys = ['value']
+
+##SETTINGS##
+#log file
+filesize = 5000
+#http://stackoverflow.com/questions/647769/why-cant-pythons-raw-string-literals-end-with-a-single-backslash
+logfiledir = r"C:\Users\Reegan\Documents\GitHub\Python-Data-Logging\Log"
+logfilename = 'log'
+logfiletype = '.csv'
+logfilenumber = 0
+logsessionnumber = 0
+lograte = 5
+#display
+displayrate = 1.0
+#variables for timing
+logtimer = 0
+displaytimer = 0
+#keeping track of file number
+filesizecount = 0
+
+#####################################
+##### put actual code that runs here
 try:
-    #put actual code here
-
-    #csv format
-    keys = ['value']
-
-    ##SETTINGS##
-    #log file
-    filesize = 5000
-    #http://stackoverflow.com/questions/647769/why-cant-pythons-raw-string-literals-end-with-a-single-backslash
-    logfiledir = r"C:\Users\Reegan\Documents\GitHub\Python-Data-Logging\Log"
-    logfilename = 'log'
-    logfiletype = '.csv'
-    logfilenumber = 0
-    logsessionnumber = 0
-    lograte = 0.1
-    #display
-    displayrate = 1.0
-    #pickle
-    picklerate = 0.25
-    picklefile = r"data.pkl"
-
-    #variables for timing
-    logtimer = 0
-    pickletimer = 0
-    displaytimer = 0
-
-    #keeping track of file number
-    filesizecount = 0
-
+    
     if not os.path.exists(logfiledir):
         os.makedirs(logfiledir)
 
@@ -122,32 +124,19 @@ try:
     logfiledir = os.path.join(logfiledir, str(logsessionnumber))
     os.mkdir(logfiledir)                
 
-                 
-
-    def csv2dict(line,keys):
-        #split line 
-        d = line.split(delimiter)
-        #zip into dictionary
-        data = dict(zip(keys,d))
-        return data
-
-    #displaying csv
-        
     try:
         while 1:
+            #open serial port
             s = openserialport()
+            
             #make log file
             logfile = os.path.join(logfiledir,logfilename + str(logfilenumber) + logfiletype)
             f = open(logfile,'w')
 
-            #open pickle file
-            fp = open(picklefile,"wb")
-        
             while filesizecount <= filesize:
                 now = time.time()
             
-                readlineCR(s)
-                line = '1,2,3'
+                line = readlineCR(s)
                 data = csv2dict(line,keys)
             
                 #display data
@@ -168,17 +157,6 @@ try:
                     f = open(logfile,'a')
                     filesizecount = 0
 
-                #pickle data
-                if (now - pickletimer) >= picklerate:
-                    try:
-                        fp = open(picklefile,"wb")
-                        pickle.dump(data,fp)
-                        pickletimer = now
-                    except EOFError:
-                        print('open file open in another process')
-                    fp.close()
-
-                
     except KeyboardInterrupt:
         print('closing')
     
