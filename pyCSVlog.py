@@ -63,7 +63,7 @@ def openserialport():
                 time.sleep(30) #wait for serial to be connected
     return(s)
 
-allowedchars = [ ord(b'0'),ord(b'1')]
+allowedchars = [ ord(b'0'),ord(b'1'),ord(b'2'),ord(b'3'),ord(b'4'),ord(b'5'),ord(b'6'),ord(b'7'),ord(b'8'),ord(b'9'),ord(b','),ord(b'-'),ord('.')]
 
 def readlineCR(serial_p):
         rv = ""
@@ -81,7 +81,6 @@ def readlineCR(serial_p):
                         rv = ""
                         print('invalid character')
                         state = 0 #invalid character detected
-        print(rv)
         return(rv)
 
 def csv2dict(line,keys):
@@ -96,12 +95,12 @@ def csv2dict(line,keys):
 ## Settings ##
 
 #csv format
-keys = ['value']
+keys = ['v','w','x','y','z']
 
 #log file
 filesize = 5000
 #http://stackoverflow.com/questions/647769/why-cant-pythons-raw-string-literals-end-with-a-single-backslash
-logfiledir = r"C:\Users\Reegan\Documents\GitHub\Python-Data-Logging\Log"
+logfiledir = r"/home/pi/Log"
 logfilename = 'log'
 logfiletype = '.csv'
 logfilenumber = 0
@@ -151,7 +150,7 @@ try:
             
                 #display data
                 if (now - displaytimer) >= displayrate:
-                    #print(data)
+                    print(data)
                     displaytimer = now
                 
                 #log data in csv
@@ -171,7 +170,6 @@ try:
         print('closing')
     
     f.close()
-    fp.close()
     s.close()
 
 ##################################
