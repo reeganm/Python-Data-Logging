@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 #script for Loging CSV data from Serial
 
 import serial
@@ -19,10 +21,13 @@ open(pidfile, 'w').write(pid) #create lock file
 ################################################
 
 #serial settings
-port = 'COM4'
+port = '/dev/ttyACM0'
 baud = '9600'
 endline = b'\n'
 delimiter = ','
+
+#################################################
+## Function Declarationss ##
 
 def openserialport():
     status = 0
@@ -87,10 +92,12 @@ def csv2dict(line,keys):
     return data
 
 
+#################################################
+## Settings ##
+
 #csv format
 keys = ['value']
 
-##SETTINGS##
 #log file
 filesize = 5000
 #http://stackoverflow.com/questions/647769/why-cant-pythons-raw-string-literals-end-with-a-single-backslash
@@ -100,11 +107,14 @@ logfiletype = '.csv'
 logfilenumber = 0
 logsessionnumber = 0
 lograte = 5
+
 #display
 displayrate = 1.0
+
 #variables for timing
 logtimer = 0
 displaytimer = 0
+
 #keeping track of file number
 filesizecount = 0
 
