@@ -6,27 +6,87 @@ import os
 import sys
 import pickle
 import os
+import json
 
+################################################
 #code that stops this process from running twice
 pid = str(os.getpid()) #get process id
-pidfile = 'pyFireBaselog.pid'
+pidfile = 'pyCSVlog.pid'
 
-if os.path.isfile(pidfile):
+if 0:#os.path.isfile(pidfile):
     print("%s already exists, exiting",pidfile)
     sys.exit()
 open(pidfile, 'w').write(pid) #create lock file
+################################################
+
+#serial settings
+port = 'COM4'
+baud = '9600'
+endline = b'\n'
+delimiter = ','
+
+def openserialport():
+    status = 0
+    while status == 0:
+        if os.path.isfile('serialsettings.json'): #look for settings file
+            #load settings file
+            print('settings file found');
+            with open("serialsettings.json") as infile:
+                serialsettings = json.load(infile)
+            try:
+                s = serial.Serial(serialsettings['port'], baudrate=baud, timeout=5.0)
+                status = 1
+                print('settings applied')
+                print('port opened')
+            except:
+                print('failed to apply saved settings')
+                os.remove('serialsettings.json')
+                time.sleep(1)
+        else: #there is no settings file
+            time.sleep(1)
+            #try opening serial port defined in this file
+            try:
+                s = serial.Serial(port, baudrate=baud, timeout=3.0)
+                print('serial port opened')
+                status = 1
+                #update settings file
+                serialsettings = { 'port':port }
+                with open("serialsettings.json", "w") as outfile:
+                    json.dump(serialsettings, outfile, indent=4)
+                    print('settings saved')
+            except serial.serialutil.SerialException:
+                print('cant connect to serial port')
+                time.sleep(30) #wait for serial to be connected
+    return(s)
+
+allowedchars = [ ord(b'0'),ord(b'1')]
+
+def readlineCR(serial_p):
+        rv = ""
+        state = 0
+        while state == 0:
+            val = serial_p.read(1)
+            if (val != b'\x00') & (val != b''): #no time out
+                val = ord(val) #convert ascii to a number
+                if val == ord('\n'):
+                    state = 1 #eol detected
+                else:
+                    if val in allowedchars: #check for valid characters
+                        rv = rv + chr(val)
+                    else: #invalid character
+                        rv = ""
+                        print('invalid character')
+                        state = 0 #invalid character detected
+        print(rv)
+        return(rv)
+            
 try:
     #put actual code here
 
     #csv format
-    keys = ['MILLIS','ERROR_MSG','FC_STATE','FC_PURGE_COUNT','FC_TIME_BETWEEN_LAST_PURGES','FC_ENERGY_SINCE_LAST_PURGE','FC_TOTAL_ENERGY','FC_CHARGE_SINCE_LAST_PURGE','FC_TOTAL_CHARGE','FC_VOLT','FC_CURR','CAP_VOLT','FC_TEMP','FC_OPTTEMP','FC_PRESS','FC_FAN_SPEED','FC_START_RELAY','FC_RES_RELAY','FC_CAP_RELAY','FC_MOTOR_RELAY','FC_PURGE_VALE','FC_H2_VALVE']
+    keys = ['value']
 
     ##SETTINGS##
-    #serial
-    port = 'COM6'
-    baud = '115200'
-    endline = b'\n'
-    delimiter = ','
     #log file
     filesize = 5000
     #http://stackoverflow.com/questions/647769/why-cant-pythons-raw-string-literals-end-with-a-single-backslash
@@ -60,23 +120,11 @@ try:
 
     #update log file directory using number
     logfiledir = os.path.join(logfiledir, str(logsessionnumber))
-    os.mkdir(logfiledir)
+    os.mkdir(logfiledir)                
 
-    def readlineCR(port):
-        rv = b""
-        while True:
-            ch = port.read()
-            if rv != b'l':
-                rv += ch
-                if ch==endline:
-                    try:
-                        rv = rv.decode("utf-8")
-                    except:
-                        rv = ""
-                    return rv
+                 
 
     def csv2dict(line,keys):
-        line = line[0:len(line)-2] #remove endline
         #split line 
         d = line.split(delimiter)
         #zip into dictionary
@@ -87,7 +135,7 @@ try:
         
     try:
         while 1:
-            s = serial.Serial(port, baudrate=baud, timeout=3.0)
+            s = openserialport()
             #make log file
             logfile = os.path.join(logfiledir,logfilename + str(logfilenumber) + logfiletype)
             f = open(logfile,'w')
@@ -98,12 +146,13 @@ try:
             while filesizecount <= filesize:
                 now = time.time()
             
-                line = readlineCR(s)
+                readlineCR(s)
+                line = '1,2,3'
                 data = csv2dict(line,keys)
             
                 #display data
                 if (now - displaytimer) >= displayrate:
-                    print(data)
+                    #print(data)
                     displaytimer = now
                 
                 #log data in csv
@@ -135,7 +184,10 @@ try:
     
     f.close()
     fp.close()
+    s.close()
 
+##################################
 #this runs when the process closes
 finally:
     os.unlink(pidfile)
+##################################
